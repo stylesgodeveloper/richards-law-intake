@@ -100,29 +100,30 @@ export default function EmailPreviewPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-navy-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-navy-900">
               Client Email Preview
             </h1>
-            <p className="text-sm text-gray-500">
-              Automated email sent to the client with retainer PDF &amp; Calendly link
+            <p className="text-xs sm:text-sm text-gray-500">
+              Automated email with retainer PDF &amp; Calendly link
             </p>
           </div>
         </div>
         <button
           onClick={() => router.push("/status")}
-          className="px-4 py-2 text-sm font-medium bg-navy-900 text-white rounded-lg hover:bg-navy-800 flex items-center gap-2"
+          className="ml-12 sm:ml-0 px-4 py-2 text-sm font-medium bg-navy-900 text-white rounded-lg hover:bg-navy-800 flex items-center gap-2 self-start sm:self-auto"
         >
           View Pipeline Status
-          <ArrowRight className="w-4 h-4" />
+          <ArrowRight className="w-4 h-4" aria-hidden="true" />
         </button>
       </div>
 
@@ -142,35 +143,35 @@ export default function EmailPreviewPage() {
       {/* Email Preview */}
       <div className="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
         {/* Email Header */}
-        <div className="border-b border-gray-200 px-6 py-4 space-y-2">
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-500 w-12">To:</span>
-            <span className="text-gray-800">
+        <div className="border-b border-gray-200 px-4 sm:px-6 py-3 sm:py-4 space-y-2">
+          <div className="flex items-start gap-2 text-xs sm:text-sm">
+            <span className="text-gray-500 w-10 sm:w-12 flex-shrink-0">To:</span>
+            <span className="text-gray-800 break-all">
               talent.legal-engineer.hackathon.automation-email@swans.co
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-500 w-12">From:</span>
+          <div className="flex items-start gap-2 text-xs sm:text-sm">
+            <span className="text-gray-500 w-10 sm:w-12 flex-shrink-0">From:</span>
             <span className="text-gray-800">
               Andrew Richards &lt;andrew@richardsandlaw.com&gt;
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm">
-            <span className="text-gray-500 w-12">Subject:</span>
+          <div className="flex items-start gap-2 text-xs sm:text-sm">
+            <span className="text-gray-500 w-10 sm:w-12 flex-shrink-0">Subject:</span>
             <span className="text-gray-900 font-semibold">
               Retainer Agreement for Your Review – Richards &amp; Law
             </span>
           </div>
-          <div className="flex items-center gap-2 text-sm pt-1 border-t border-gray-100 mt-2">
-            <Paperclip className="w-3.5 h-3.5 text-gray-400" />
-            <span className="text-blue-600 text-xs font-medium">
+          <div className="flex items-center gap-2 text-xs sm:text-sm pt-1 border-t border-gray-100 mt-2">
+            <Paperclip className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" aria-hidden="true" />
+            <span className="text-blue-600 text-xs font-medium truncate">
               {clientName} [Retainer Agreement].pdf
             </span>
           </div>
         </div>
 
         {/* Email Body */}
-        <div className="px-8 py-6 space-y-4 text-[15px] leading-relaxed text-gray-800">
+        <div className="px-5 sm:px-8 py-5 sm:py-6 space-y-4 text-sm sm:text-[15px] leading-relaxed text-gray-800">
           <p>Hello {clientFirst},</p>
 
           <p>
@@ -236,12 +237,12 @@ export default function EmailPreviewPage() {
         </div>
 
         {/* Legend */}
-        <div className="border-t border-gray-200 px-6 py-3 bg-gray-50 flex items-center gap-6 text-xs text-gray-500">
+        <div className="border-t border-gray-200 px-4 sm:px-6 py-3 bg-gray-50 flex flex-wrap items-center gap-4 sm:gap-6 text-[10px] sm:text-xs text-gray-500">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-gold-100 rounded" /> Personalized field
+            <span className="w-3 h-3 bg-gold-100 rounded flex-shrink-0" aria-hidden="true" /> Personalized field
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-emerald-50 border border-emerald-200 rounded" /> AI-generated paragraph
+            <span className="w-3 h-3 bg-emerald-50 border border-emerald-200 rounded flex-shrink-0" aria-hidden="true" /> AI-generated paragraph
           </div>
         </div>
       </div>

@@ -235,19 +235,20 @@ export default function VerifyPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.push("/")}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Back to upload"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-navy-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-navy-900">
               Verify Extracted Data
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-xs sm:text-sm text-gray-500">
               Matter: {matterId} &middot; {pdfName}
             </p>
           </div>
@@ -599,25 +600,26 @@ export default function VerifyPage() {
           </div>
 
           {/* Actions */}
-          <div className="border-t border-gray-200 p-4 bg-gray-50 space-y-3">
+          <div className="border-t border-gray-200 p-3 sm:p-4 bg-gray-50 space-y-3">
             {error && (
-              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
-                <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3" role="alert">
+                <XCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
                 <p className="text-sm text-red-700">{error}</p>
               </div>
             )}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
               <button
                 onClick={() => router.push("/")}
-                className="flex-1 py-2.5 px-4 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
+                className="sm:flex-1 py-2.5 px-4 rounded-lg text-sm font-medium border border-gray-300 text-gray-700 hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className="w-4 h-4" aria-hidden="true" />
                 Re-extract
               </button>
               <button
                 onClick={handleApprove}
                 disabled={processing}
-                className={`flex-[2] py-2.5 px-4 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
+                aria-busy={processing}
+                className={`sm:flex-[2] py-2.5 px-4 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2 ${
                   processing
                     ? "bg-gray-200 text-gray-400 cursor-not-allowed"
                     : "bg-emerald-600 text-white hover:bg-emerald-700 shadow-sm"
@@ -625,12 +627,12 @@ export default function VerifyPage() {
               >
                 {processing ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
                     Processing...
                   </>
                 ) : (
                   <>
-                    <Send className="w-4 h-4" />
+                    <Send className="w-4 h-4" aria-hidden="true" />
                     Approve & Process in Clio
                   </>
                 )}

@@ -23,13 +23,18 @@ import { useRouter } from "next/navigation";
 
 function FlowArrow({ direction = "down" }: { direction?: "down" | "right" }) {
   return direction === "down" ? (
-    <div className="flex justify-center py-2">
+    <div className="flex justify-center py-2" aria-hidden="true">
       <ArrowDown className="w-5 h-5 text-gray-300" />
     </div>
   ) : (
-    <div className="flex items-center px-2">
-      <ArrowRight className="w-5 h-5 text-gray-300" />
-    </div>
+    <>
+      <div className="hidden md:flex items-center px-2" aria-hidden="true">
+        <ArrowRight className="w-5 h-5 text-gray-300" />
+      </div>
+      <div className="flex md:hidden justify-center py-1" aria-hidden="true">
+        <ArrowDown className="w-5 h-5 text-gray-300" />
+      </div>
+    </>
   );
 }
 
@@ -76,32 +81,33 @@ export default function ArchitecturePage() {
         <button
           onClick={() => router.push("/")}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label="Back to home"
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
         <div>
-          <h1 className="text-3xl font-bold text-navy-900">
+          <h1 className="text-2xl sm:text-3xl font-bold text-navy-900">
             System Architecture
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500">
             End-to-end automation pipeline for Richards &amp; Law
           </p>
         </div>
       </div>
 
       {/* Overview */}
-      <div className="bg-gradient-to-r from-navy-900 to-navy-800 rounded-2xl p-6 text-white">
-        <h2 className="text-lg font-bold mb-3">Pipeline Overview</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-gradient-to-r from-navy-900 to-navy-800 rounded-2xl p-4 sm:p-6 text-white">
+        <h2 className="text-base sm:text-lg font-bold mb-3">Pipeline Overview</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {[
             { label: "Stack", value: "Next.js + Make.com + Claude + Clio" },
             { label: "Extraction", value: "Claude Sonnet via API" },
             { label: "Orchestration", value: "Make.com (2 Scenarios)" },
             { label: "Legal Ops", value: "Clio Manage + Doc Automation" },
           ].map((item, i) => (
-            <div key={i} className="bg-white/10 rounded-lg p-3">
-              <p className="text-xs text-navy-200">{item.label}</p>
-              <p className="text-sm font-semibold mt-0.5">{item.value}</p>
+            <div key={i} className="bg-white/10 rounded-lg p-2.5 sm:p-3">
+              <p className="text-[10px] sm:text-xs text-navy-200">{item.label}</p>
+              <p className="text-xs sm:text-sm font-semibold mt-0.5">{item.value}</p>
             </div>
           ))}
         </div>
@@ -115,7 +121,7 @@ export default function ArchitecturePage() {
           </span>
           Scenario 1: PDF Extraction
         </h2>
-        <div className="bg-purple-50/50 rounded-2xl border border-purple-100 p-6">
+        <div className="bg-purple-50/50 rounded-2xl border border-purple-100 p-3 sm:p-6">
           <div className="flex flex-col md:flex-row items-stretch gap-3">
             <FlowNode
               icon={Upload}
@@ -160,7 +166,7 @@ export default function ArchitecturePage() {
           </span>
           Scenario 2: Post-Verification Pipeline
         </h2>
-        <div className="bg-emerald-50/50 rounded-2xl border border-emerald-100 p-6 space-y-3">
+        <div className="bg-emerald-50/50 rounded-2xl border border-emerald-100 p-3 sm:p-6 space-y-3">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <FlowNode
               icon={Database}
@@ -337,18 +343,18 @@ export default function ArchitecturePage() {
       </div>
 
       {/* ROI */}
-      <div className="bg-gradient-to-r from-gold-500 to-gold-400 rounded-2xl p-6 text-navy-900">
-        <h2 className="text-lg font-bold mb-3">Business Impact</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="bg-gradient-to-r from-gold-500 to-gold-400 rounded-2xl p-4 sm:p-6 text-navy-900">
+        <h2 className="text-base sm:text-lg font-bold mb-3">Business Impact</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           {[
             { stat: "45 → 2 min", label: "Intake time per case" },
             { stat: "37.5 hrs", label: "Saved monthly (50 cases)" },
             { stat: "$0", label: "Manual steps post-verify" },
             { stat: "100%", label: "Consistent retainer quality" },
           ].map((item, i) => (
-            <div key={i} className="bg-white/20 rounded-lg p-3">
-              <p className="text-2xl font-bold">{item.stat}</p>
-              <p className="text-xs mt-0.5 opacity-80">{item.label}</p>
+            <div key={i} className="bg-white/20 rounded-lg p-2.5 sm:p-3">
+              <p className="text-xl sm:text-2xl font-bold">{item.stat}</p>
+              <p className="text-[10px] sm:text-xs mt-0.5 opacity-80">{item.label}</p>
             </div>
           ))}
         </div>

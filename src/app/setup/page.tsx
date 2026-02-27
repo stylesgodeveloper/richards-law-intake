@@ -78,14 +78,15 @@ export default function SetupPage() {
         <button
           onClick={() => router.push("/")}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label="Back to home"
         >
           <ArrowLeft className="w-5 h-5 text-gray-600" />
         </button>
         <div>
-          <h1 className="text-2xl font-bold text-navy-900">
+          <h1 className="text-xl sm:text-2xl font-bold text-navy-900">
             Clio Manage Setup Guide
           </h1>
-          <p className="text-sm text-gray-500">
+          <p className="text-xs sm:text-sm text-gray-500">
             Step-by-step instructions to configure Clio for the automation
           </p>
         </div>

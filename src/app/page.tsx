@@ -124,17 +124,17 @@ export default function UploadPage() {
   };
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 sm:space-y-12">
       {/* Hero Section */}
-      <div className="text-center space-y-4 pt-4">
-        <div className="inline-flex items-center gap-2 bg-gold-50 border border-gold-200 rounded-full px-4 py-1.5 text-sm text-gold-700 font-medium">
-          <Zap className="w-3.5 h-3.5" />
+      <div className="text-center space-y-3 sm:space-y-4 pt-2 sm:pt-4">
+        <div className="inline-flex items-center gap-2 bg-gold-50 border border-gold-200 rounded-full px-3 sm:px-4 py-1.5 text-xs sm:text-sm text-gold-700 font-medium">
+          <Zap className="w-3.5 h-3.5" aria-hidden="true" />
           Intake time reduced from 45 min to under 2 min
         </div>
-        <h1 className="text-4xl md:text-5xl font-bold text-navy-900 tracking-tight">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-navy-900 tracking-tight text-balance">
           AI-Powered Case Intake
         </h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
+        <p className="text-base sm:text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed px-2">
           Upload a NYC Police Accident Report. AI extracts every detail, your
           team verifies, and the retainer agreement is generated automatically
           in Clio Manage.
@@ -142,7 +142,7 @@ export default function UploadPage() {
       </div>
 
       {/* Workflow Steps */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 max-w-4xl mx-auto">
+      <div className="grid grid-cols-3 md:grid-cols-6 gap-2 sm:gap-3 max-w-4xl mx-auto" role="list" aria-label="Workflow steps">
         {[
           { icon: Upload, label: "Upload PDF", color: "text-blue-600 bg-blue-50" },
           { icon: Brain, label: "AI Extracts", color: "text-purple-600 bg-purple-50" },
@@ -151,15 +151,15 @@ export default function UploadPage() {
           { icon: FileCheck, label: "Retainer Generated", color: "text-navy-600 bg-navy-50" },
           { icon: Mail, label: "Client Emailed", color: "text-rose-600 bg-rose-50" },
         ].map((step, i) => (
-          <div key={i} className="flex flex-col items-center gap-2 relative">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${step.color}`}>
-              <step.icon className="w-5 h-5" />
+          <div key={i} className="flex flex-col items-center gap-1.5 sm:gap-2 relative" role="listitem">
+            <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-xl flex items-center justify-center ${step.color}`}>
+              <step.icon className="w-4 h-4 sm:w-5 sm:h-5" aria-hidden="true" />
             </div>
-            <span className="text-xs font-medium text-gray-600 text-center">
+            <span className="text-[10px] sm:text-xs font-medium text-gray-600 text-center leading-tight">
               {step.label}
             </span>
             {i < 5 && (
-              <ChevronRight className="hidden md:block absolute right-[-14px] top-3 w-4 h-4 text-gray-300" />
+              <ChevronRight className="hidden md:block absolute right-[-14px] top-3 w-4 h-4 text-gray-300" aria-hidden="true" />
             )}
           </div>
         ))}
@@ -321,7 +321,7 @@ export default function UploadPage() {
       </div>
 
       {/* ROI Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 max-w-4xl mx-auto">
         {[
           {
             icon: Clock,
@@ -350,34 +350,34 @@ export default function UploadPage() {
         ].map((item, i) => (
           <div
             key={i}
-            className="bg-white rounded-xl border border-gray-200 p-4 text-center"
+            className="bg-white rounded-xl border border-gray-200 p-3 sm:p-4 text-center"
           >
-            <item.icon className="w-5 h-5 text-gold-500 mx-auto mb-2" />
-            <p className="text-2xl font-bold text-navy-900">{item.stat}</p>
-            <p className="text-xs font-medium text-gray-600">{item.label}</p>
+            <item.icon className="w-4 h-4 sm:w-5 sm:h-5 text-gold-500 mx-auto mb-1.5 sm:mb-2" aria-hidden="true" />
+            <p className="text-xl sm:text-2xl font-bold text-navy-900">{item.stat}</p>
+            <p className="text-[10px] sm:text-xs font-medium text-gray-600">{item.label}</p>
             <p className="text-[10px] text-gray-400 mt-0.5">{item.detail}</p>
           </div>
         ))}
       </div>
 
       {/* Bottom Links */}
-      <div className="flex justify-center gap-4 text-sm">
+      <nav className="flex flex-col sm:flex-row justify-center items-center gap-2 sm:gap-4 text-sm" aria-label="Additional resources">
         <a
           href="/architecture"
-          className="text-navy-600 hover:text-navy-800 font-medium flex items-center gap-1"
+          className="text-navy-600 hover:text-navy-800 font-medium flex items-center gap-1 transition-colors"
         >
           View System Architecture
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
         </a>
-        <span className="text-gray-300">|</span>
+        <span className="hidden sm:inline text-gray-300" aria-hidden="true">|</span>
         <a
           href="/setup"
-          className="text-navy-600 hover:text-navy-800 font-medium flex items-center gap-1"
+          className="text-navy-600 hover:text-navy-800 font-medium flex items-center gap-1 transition-colors"
         >
           Clio Setup Guide
-          <ChevronRight className="w-3.5 h-3.5" />
+          <ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
         </a>
-      </div>
+      </nav>
     </div>
   );
 }

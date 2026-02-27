@@ -12,6 +12,8 @@
 
 body {
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 @layer utilities {
@@ -20,12 +22,43 @@ body {
   }
 }
 
+/* Focus visible styles for accessibility */
+*:focus-visible {
+  outline: 2px solid #f0b429;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Skip to main content link (screen reader) */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 16px;
+  z-index: 100;
+  padding: 8px 16px;
+  background: #102a43;
+  color: white;
+  border-radius: 0 0 8px 8px;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: top 0.2s;
+}
+.skip-link:focus {
+  top: 0;
+}
+
 /* PDF embed styles */
 .pdf-viewer {
   width: 100%;
   height: 100%;
-  min-height: 600px;
+  min-height: 400px;
   border: none;
+}
+@media (min-width: 768px) {
+  .pdf-viewer {
+    min-height: 600px;
+  }
 }
 
 /* Confidence indicator styles */
@@ -94,4 +127,51 @@ body {
 
 .animate-slide-up {
   animation: slide-up 0.3s ease-out;
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+@keyframes scale-in {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s ease-out;
+}
+
+/* Print styles for retainer preview */
+@media print {
+  header, footer, .no-print {
+    display: none !important;
+  }
+  main {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+  body {
+    background: white !important;
+  }
+  .bg-gold-100, .bg-purple-100, .bg-emerald-100 {
+    background: transparent !important;
+    border-bottom: 1px solid #999;
+    padding: 0;
+    border-radius: 0;
+  }
+}
+
+/* Reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }

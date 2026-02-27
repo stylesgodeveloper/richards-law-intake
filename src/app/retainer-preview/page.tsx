@@ -70,30 +70,38 @@ export default function RetainerPreviewPage() {
   return (
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 no-print">
         <div className="flex items-center gap-3">
           <button
             onClick={() => router.back()}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            aria-label="Go back"
           >
             <ArrowLeft className="w-5 h-5 text-gray-600" />
           </button>
           <div>
-            <h1 className="text-2xl font-bold text-navy-900">
+            <h1 className="text-xl sm:text-2xl font-bold text-navy-900">
               Retainer Agreement Preview
             </h1>
-            <p className="text-sm text-gray-500">
-              Preview of merge fields filled from extraction &middot; Matter: {matterId}
+            <p className="text-xs sm:text-sm text-gray-500">
+              Merge fields filled from extraction &middot; Matter: {matterId}
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 ml-12 sm:ml-0">
+          <button
+            onClick={() => window.print()}
+            className="px-3 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 flex items-center gap-2"
+          >
+            <Printer className="w-4 h-4" aria-hidden="true" />
+            <span className="hidden sm:inline">Print</span>
+          </button>
           <button
             onClick={() => router.push("/email-preview")}
-            className="px-4 py-2 text-sm font-medium bg-navy-900 text-white rounded-lg hover:bg-navy-800 flex items-center gap-2"
+            className="px-3 sm:px-4 py-2 text-sm font-medium bg-navy-900 text-white rounded-lg hover:bg-navy-800 flex items-center gap-2"
           >
             Email Preview
-            <ArrowRight className="w-4 h-4" />
+            <ArrowRight className="w-4 h-4" aria-hidden="true" />
           </button>
         </div>
       </div>
@@ -136,7 +144,7 @@ export default function RetainerPreviewPage() {
           </span>
         </div>
 
-        <div className="px-10 py-8 space-y-6 text-[15px] leading-relaxed text-gray-800 font-serif">
+        <div className="px-5 sm:px-10 py-6 sm:py-8 space-y-5 sm:space-y-6 text-sm sm:text-[15px] leading-relaxed text-gray-800 font-serif">
           {/* Firm Header */}
           <div className="text-center space-y-1 pb-4 border-b border-gray-200">
             <h2 className="text-2xl font-bold tracking-wider text-navy-900" style={{ fontFamily: "Georgia, serif" }}>
@@ -336,9 +344,9 @@ export default function RetainerPreviewPage() {
           {/* Signature */}
           <div className="pt-6 space-y-6 border-t border-gray-200">
             <p className="font-bold">ACCEPTED BY:</p>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
               <div>
-                <p className="border-b border-gray-400 pb-1 mb-1">
+                <p className="border-b border-gray-400 pb-1 mb-1 text-xs sm:text-sm">
                   CLIENT ___________________________
                 </p>
                 <p className="font-semibold">
@@ -347,13 +355,13 @@ export default function RetainerPreviewPage() {
                   </span>
                 </p>
               </div>
-              <div className="text-right">
+              <div className="sm:text-right">
                 <p>Date: _______________</p>
               </div>
             </div>
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-8">
               <div>
-                <p className="border-b border-gray-400 pb-1 mb-1">
+                <p className="border-b border-gray-400 pb-1 mb-1 text-xs sm:text-sm">
                   Richards &amp; Law Attorney ___________________________
                 </p>
                 <p className="font-semibold">
@@ -362,7 +370,7 @@ export default function RetainerPreviewPage() {
                   </span>
                 </p>
               </div>
-              <div className="text-right">
+              <div className="sm:text-right">
                 <p>Date: _______________</p>
               </div>
             </div>
@@ -370,18 +378,18 @@ export default function RetainerPreviewPage() {
         </div>
 
         {/* Legend */}
-        <div className="border-t border-gray-200 px-6 py-3 bg-gray-50 flex items-center gap-6 text-xs text-gray-500">
+        <div className="border-t border-gray-200 px-4 sm:px-6 py-3 bg-gray-50 flex flex-wrap items-center gap-3 sm:gap-6 text-[10px] sm:text-xs text-gray-500 no-print">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-gold-100 rounded" /> Extracted field
+            <span className="w-3 h-3 bg-gold-100 rounded flex-shrink-0" aria-hidden="true" /> Extracted field
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-purple-100 rounded" /> Gender pronoun
+            <span className="w-3 h-3 bg-purple-100 rounded flex-shrink-0" aria-hidden="true" /> Gender pronoun
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-emerald-100 rounded" /> Clio built-in
+            <span className="w-3 h-3 bg-emerald-100 rounded flex-shrink-0" aria-hidden="true" /> Clio built-in
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 bg-red-50 border border-red-300 rounded" /> Conditional paragraph
+            <span className="w-3 h-3 bg-red-50 border border-red-300 rounded flex-shrink-0" aria-hidden="true" /> Conditional
           </div>
         </div>
       </div>
