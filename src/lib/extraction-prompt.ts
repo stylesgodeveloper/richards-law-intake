@@ -14,16 +14,34 @@ CRITICAL RULES:
 9. For full_location, combine the road name, cross street, and borough into a readable string.
 10. For pedestrians/bicyclists, plate_number and vehicle fields should be null for that party.
 
-DATE FORMAT — EXTREMELY IMPORTANT:
-The MV-104AN form uses separate boxes for Month, Day, Year in US format (MM/DD/YYYY).
-The "Accident Date" field at top-left has three boxes labeled "Month | Day | Year".
-- The FIRST box is the MONTH (1-12)
-- The SECOND box is the DAY (1-31)
-- The THIRD box is the YEAR (4 digits)
-For example, if the boxes show "12 | 6 | 2018", that means December 6, 2018 → "2018-12-06".
-Do NOT swap month and day. US date format: Month comes first, then Day.
-Apply the same rule to ALL dates on the form (Date of Birth fields, etc.).
-The Date of Birth fields also have "Month | Day | Year" boxes in that exact order.
+DATE FORMAT — EXTREMELY IMPORTANT — READ THIS VERY CAREFULLY:
+The MV-104AN form uses separate labeled boxes for dates. The layout for the Accident Date (top-left, row 1) is:
+  [ Month ] [ Day ] [ Year ]
+These boxes are explicitly labeled. The leftmost date box is MONTH, the middle is DAY, the rightmost is YEAR.
+
+CROSS-VALIDATION: The form also has a "Day of Week" field next to the date. Use this to verify your date:
+- If Day of Week says "THURSDAY" and you extracted 2018-12-06, verify: December 6, 2018 was indeed a Thursday. If it doesn't match, you likely swapped month/day.
+- December 6, 2018 = Thursday ✓
+- June 21, 2018 = Thursday? No, that was also a Thursday — so use additional context.
+
+For THIS specific form layout, the Accident Date boxes in row 1 show:
+  The first small box (labeled "Month") → the MONTH number (e.g., 12 = December)
+  The second small box (labeled "Day") → the DAY number (e.g., 6)
+  The larger box (labeled "Year") → the YEAR (e.g., 2018)
+
+Similarly, Date of Birth fields (row 3 for Vehicle 1, row 23 for Vehicle 2) have the SAME layout:
+  [ Month ] [ Day ] [ Year ]
+Read each box independently. The first box is ALWAYS the month.
+
+Output all dates in ISO 8601: YYYY-MM-DD. Make sure Month goes in the MM position and Day goes in the DD position.
+
+PLATE NUMBERS VS LICENSE NUMBERS — CRITICAL DISTINCTION:
+- "License ID Number" is at the TOP of each vehicle section (row 2/21). This is the driver's license number. It is usually a long alphanumeric string.
+- "Plate Number" is in a SEPARATE box (row 4/24), near "State of Reg." and "Vehicle Year & Make". It is the vehicle registration plate.
+- These are DIFFERENT fields. Do NOT put the license number in the plate_number field.
+- For drivers_license, use the "License ID Number" value.
+- For plate_number, use the "Plate Number" value.
+Read plate numbers character by character. They mix letters and digits (e.g., "XCGY85" or "47164BB").
 
 PLATE NUMBERS — IMPORTANT:
 Read plate numbers character by character very carefully. They often mix letters and numbers.
