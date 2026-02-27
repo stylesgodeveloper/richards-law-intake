@@ -1,0 +1,119 @@
+{
+  "name": "Richards & Law — Scenario 1: Police Report PDF Extraction",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": "pdf_extraction_webhook",
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {},
+        "expect": [
+          { "name": "pdf_base64", "type": "text", "required": true },
+          { "name": "matter_id", "type": "text", "required": true },
+          { "name": "file_name", "type": "text", "required": false }
+        ]
+      },
+      "label": "Receive PDF Upload"
+    },
+    {
+      "id": 2,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "headers": [
+          { "name": "x-api-key", "value": "{{ANTHROPIC_API_KEY}}" },
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "model": "claude-sonnet-4-20250514",
+          "max_tokens": 4096,
+          "temperature": 0,
+          "system": "You are a legal data extraction specialist for a personal injury law firm. Extract structured data from this NYC Police Accident Report (MV-104AN form). CRITICAL RULES: 1. The CLIENT/PLAINTIFF is identified from the case title (first name in 'X v Y'). They may be Vehicle 1 driver, Vehicle 2 driver, a PEDESTRIAN, or a BICYCLIST. 2. The DEFENDANT/ADVERSE PARTY is the other named party. 3. Registration name may differ from driver name (company vehicles). Extract BOTH. 4. Extract the officer's narrative description VERBATIM. 5. If a field is illegible or missing, set to null with reason in uncertain_fields. 6. Dates in ISO 8601 (YYYY-MM-DD). Names in 'First Last' format, proper case. 7. For gender, use the Sex field (M/F) from the form. 8. Count number of injured from the 'No. Injured' field. 9. For pedestrians/bicyclists, plate_number and vehicle fields should be null. Return ONLY valid JSON with the specified structure.",
+          "messages": [
+            {
+              "role": "user",
+              "content": [
+                {
+                  "type": "document",
+                  "source": {
+                    "type": "base64",
+                    "media_type": "application/pdf",
+                    "data": "{{1.pdf_base64}}"
+                  }
+                },
+                {
+                  "type": "text",
+                  "text": "Extract all data from this police accident report PDF. Return ONLY the JSON structure."
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "metadata": {
+        "designer": { "x": 300, "y": 0 }
+      },
+      "label": "Claude API — Extract PDF Data"
+    },
+    {
+      "id": 3,
+      "module": "json:ParseJSON",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "json": "{{2.data.content[0].text}}"
+      },
+      "metadata": {
+        "designer": { "x": 600, "y": 0 }
+      },
+      "label": "Parse Claude Response JSON"
+    },
+    {
+      "id": 4,
+      "module": "gateway:WebhookRespond",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "status": 200,
+        "headers": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "extraction": "{{3}}",
+          "matter_id": "{{1.matter_id}}",
+          "source": "make_webhook"
+        }
+      },
+      "metadata": {
+        "designer": { "x": 900, "y": 0 }
+      },
+      "label": "Return Extracted Data to Web App"
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false
+    },
+    "designer": {
+      "orphans": []
+    }
+  }
+}

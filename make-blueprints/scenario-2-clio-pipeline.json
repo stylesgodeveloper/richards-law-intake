@@ -1,0 +1,400 @@
+{
+  "name": "Richards & Law — Scenario 2: Post-Verification Clio Pipeline",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": "verified_data_webhook",
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "expect": [
+          { "name": "matter_id", "type": "text", "required": true },
+          { "name": "client_full_name", "type": "text" },
+          { "name": "client_first_name", "type": "text" },
+          { "name": "client_gender", "type": "text" },
+          { "name": "client_address", "type": "text" },
+          { "name": "client_dob", "type": "text" },
+          { "name": "client_drivers_license", "type": "text" },
+          { "name": "client_plate_number", "type": "text" },
+          { "name": "client_vehicle", "type": "text" },
+          { "name": "defendant_name", "type": "text" },
+          { "name": "defendant_address", "type": "text" },
+          { "name": "defendant_vehicle", "type": "text" },
+          { "name": "accident_date", "type": "text" },
+          { "name": "accident_location", "type": "text" },
+          { "name": "accident_description", "type": "text" },
+          { "name": "accident_type", "type": "text" },
+          { "name": "number_injured", "type": "text" },
+          { "name": "injuries_description", "type": "text" },
+          { "name": "police_report_number", "type": "text" },
+          { "name": "officer_name", "type": "text" },
+          { "name": "precinct", "type": "text" },
+          { "name": "statute_of_limitations_date", "type": "text" },
+          { "name": "has_injuries", "type": "boolean" },
+          { "name": "client_role", "type": "text" }
+        ]
+      },
+      "label": "Receive Verified Data"
+    },
+    {
+      "id": 2,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/custom_fields",
+        "method": "GET",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "qs": [
+          { "name": "fields", "value": "id,name,parent_type" },
+          { "name": "parent_type", "value": "Matter" }
+        ]
+      },
+      "metadata": { "designer": { "x": 300, "y": 0 } },
+      "label": "Get Clio Custom Field IDs"
+    },
+    {
+      "id": 3,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/matters/{{1.matter_id}}",
+        "method": "PATCH",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "data": {
+            "custom_field_values": [
+              { "custom_field": { "id": "{{CF_ClientFullName_ID}}" }, "value": "{{1.client_full_name}}" },
+              { "custom_field": { "id": "{{CF_ClientGender_ID}}" }, "value": "{{1.client_gender}}" },
+              { "custom_field": { "id": "{{CF_ClientAddress_ID}}" }, "value": "{{1.client_address}}" },
+              { "custom_field": { "id": "{{CF_ClientDOB_ID}}" }, "value": "{{1.client_dob}}" },
+              { "custom_field": { "id": "{{CF_ClientDriversLicense_ID}}" }, "value": "{{1.client_drivers_license}}" },
+              { "custom_field": { "id": "{{CF_ClientPlateNumber_ID}}" }, "value": "{{1.client_plate_number}}" },
+              { "custom_field": { "id": "{{CF_ClientVehicle_ID}}" }, "value": "{{1.client_vehicle}}" },
+              { "custom_field": { "id": "{{CF_DefendantName_ID}}" }, "value": "{{1.defendant_name}}" },
+              { "custom_field": { "id": "{{CF_DefendantAddress_ID}}" }, "value": "{{1.defendant_address}}" },
+              { "custom_field": { "id": "{{CF_DefendantVehicle_ID}}" }, "value": "{{1.defendant_vehicle}}" },
+              { "custom_field": { "id": "{{CF_AccidentDate_ID}}" }, "value": "{{1.accident_date}}" },
+              { "custom_field": { "id": "{{CF_AccidentLocation_ID}}" }, "value": "{{1.accident_location}}" },
+              { "custom_field": { "id": "{{CF_AccidentDescription_ID}}" }, "value": "{{1.accident_description}}" },
+              { "custom_field": { "id": "{{CF_AccidentType_ID}}" }, "value": "{{1.accident_type}}" },
+              { "custom_field": { "id": "{{CF_NumberInjured_ID}}" }, "value": "{{1.number_injured}}" },
+              { "custom_field": { "id": "{{CF_InjuriesDescription_ID}}" }, "value": "{{1.injuries_description}}" },
+              { "custom_field": { "id": "{{CF_PoliceReportNumber_ID}}" }, "value": "{{1.police_report_number}}" },
+              { "custom_field": { "id": "{{CF_OfficerName_ID}}" }, "value": "{{1.officer_name}}" },
+              { "custom_field": { "id": "{{CF_Precinct_ID}}" }, "value": "{{1.precinct}}" },
+              { "custom_field": { "id": "{{CF_StatuteOfLimitationsDate_ID}}" }, "value": "{{1.statute_of_limitations_date}}" }
+            ]
+          }
+        }
+      },
+      "metadata": { "designer": { "x": 600, "y": 0 } },
+      "label": "Update Matter Custom Fields"
+    },
+    {
+      "id": 4,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/matters/{{1.matter_id}}",
+        "method": "PATCH",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "data": {
+            "status": "Open",
+            "custom_rate": null,
+            "stage": "Retainer Ready"
+          }
+        }
+      },
+      "metadata": { "designer": { "x": 900, "y": 0 } },
+      "label": "Change Stage → Retainer Ready (Triggers Doc Automation)"
+    },
+    {
+      "id": 5,
+      "module": "builtin:Sleep",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "timeout": 20
+      },
+      "metadata": { "designer": { "x": 1200, "y": 0 } },
+      "label": "Wait 20s for Doc Generation"
+    },
+    {
+      "id": 6,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/documents",
+        "method": "GET",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "qs": [
+          { "name": "matter_id", "value": "{{1.matter_id}}" },
+          { "name": "order", "value": "created_at(desc)" },
+          { "name": "limit", "value": "1" },
+          { "name": "fields", "value": "id,name,latest_document_version{id,uuid}" }
+        ]
+      },
+      "metadata": { "designer": { "x": 1500, "y": 0 } },
+      "label": "Find Generated Retainer Document"
+    },
+    {
+      "id": 7,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/documents/{{6.data[0].id}}/download",
+        "method": "GET",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" }
+        ]
+      },
+      "metadata": { "designer": { "x": 1800, "y": 0 } },
+      "label": "Download Retainer PDF"
+    },
+    {
+      "id": 8,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/matters/{{1.matter_id}}",
+        "method": "GET",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "qs": [
+          { "name": "fields", "value": "id,relationships{id,contact{id,first_name,last_name,primary_email_address}}" }
+        ]
+      },
+      "metadata": { "designer": { "x": 2100, "y": 0 } },
+      "label": "Get Contact Email from Matter"
+    },
+    {
+      "id": 9,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/calendar_entries",
+        "method": "POST",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "data": {
+            "summary": "SOL DEADLINE (8yr) — {{1.client_full_name}} v. {{1.defendant_name}}",
+            "description": "Statute of Limitations expires for Matter {{1.matter_id}}. Accident date: {{1.accident_date}}. NOTE: Client requested 8-year SOL calendar. Standard NY PI SOL is 3 years ({{sol_3yr_date}}). Verify applicable SOL with supervising attorney.",
+            "start_at": "{{1.statute_of_limitations_date}}T09:00:00-05:00",
+            "end_at": "{{1.statute_of_limitations_date}}T09:30:00-05:00",
+            "all_day": true,
+            "matter": { "id": "{{1.matter_id}}" },
+            "attendees": [{ "type": "Contact", "id": "{{responsible_attorney_id}}" }],
+            "reminders": [
+              { "minutes": 43200, "method": "email" },
+              { "minutes": 10080, "method": "popup" }
+            ]
+          }
+        }
+      },
+      "metadata": { "designer": { "x": 2400, "y": 0 } },
+      "label": "Create SOL Calendar Entry (8-year)"
+    },
+    {
+      "id": 10,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/calendar_entries",
+        "method": "POST",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "data": {
+            "summary": "SOL DEADLINE (3yr standard) — {{1.client_full_name}} v. {{1.defendant_name}}",
+            "description": "Standard 3-year NY PI Statute of Limitations. Accident date: {{1.accident_date}}. This is the standard SOL — the 8-year SOL was also calendared per client request.",
+            "start_at": "{{sol_3yr_date}}T09:00:00-05:00",
+            "end_at": "{{sol_3yr_date}}T09:30:00-05:00",
+            "all_day": true,
+            "matter": { "id": "{{1.matter_id}}" }
+          }
+        }
+      },
+      "metadata": { "designer": { "x": 2400, "y": 200 } },
+      "label": "Create SOL Calendar Entry (3-year standard)"
+    },
+    {
+      "id": 11,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "parameters": {},
+      "mapper": {
+        "routes": [
+          {
+            "label": "Summer/Spring (March-August)",
+            "condition": "{{ifempty(toNumber(formatDate(now; 'M')) >= 3 AND toNumber(formatDate(now; 'M')) <= 8; false)}}",
+            "modules": [12]
+          },
+          {
+            "label": "Winter/Autumn (September-February)",
+            "condition": "{{true}}",
+            "modules": [13]
+          }
+        ]
+      },
+      "metadata": { "designer": { "x": 2700, "y": 0 } },
+      "label": "Seasonal Calendly Router"
+    },
+    {
+      "id": 12,
+      "module": "builtin:BasicFeeder",
+      "version": 1,
+      "mapper": {
+        "calendly_link": "https://calendly.com/swans-santiago-p/summer-spring?month=2026-03"
+      },
+      "metadata": { "designer": { "x": 3000, "y": -100 } },
+      "label": "Set Summer/Spring Calendly Link"
+    },
+    {
+      "id": 13,
+      "module": "builtin:BasicFeeder",
+      "version": 1,
+      "mapper": {
+        "calendly_link": "https://calendly.com/swans-santiago-p/winter-autumn?month=2026-02"
+      },
+      "metadata": { "designer": { "x": 3000, "y": 100 } },
+      "label": "Set Winter/Autumn Calendly Link"
+    },
+    {
+      "id": 14,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://api.anthropic.com/v1/messages",
+        "method": "POST",
+        "headers": [
+          { "name": "x-api-key", "value": "{{ANTHROPIC_API_KEY}}" },
+          { "name": "anthropic-version", "value": "2023-06-01" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "model": "claude-sonnet-4-20250514",
+          "max_tokens": 1024,
+          "temperature": 0.3,
+          "system": "You write personalized client emails for a personal injury law firm. Write a warm, empathetic email paragraph (2-3 sentences) summarizing the accident from the client's perspective based on the officer's narrative. Include both parties' accounts if available. Do NOT include greetings, sign-offs, or the full email — just the summary paragraph.",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Client: {{1.client_full_name}}\nAccident type: {{1.accident_type}}\nDate: {{1.accident_date}}\nOfficer's narrative: {{1.accident_description}}\n\nWrite a personalized 2-3 sentence summary of this accident from the client's perspective."
+            }
+          ]
+        }
+      },
+      "metadata": { "designer": { "x": 3300, "y": 0 } },
+      "label": "Claude — Generate Personalized Email Paragraph"
+    },
+    {
+      "id": 15,
+      "module": "google-email:ActionSendEmail",
+      "version": 2,
+      "parameters": {
+        "account": "{{GMAIL_CONNECTION}}"
+      },
+      "mapper": {
+        "to": "{{8.contact_email}}",
+        "subject": "Retainer Agreement for Your Review – Richards & Law",
+        "content": "<p>Hello {{1.client_first_name}},</p><p>I hope you're doing well. I wanted to follow up regarding your {{1.accident_type}} on {{formatDate(1.accident_date; 'MMMM D, YYYY')}}. I know dealing with the aftermath of an accident is stressful, and I want to make sure we move things forward as smoothly as possible for you.</p><p>{{14.data.content[0].text}}</p><p>Attached is your Retainer Agreement, which sets the foundation for our partnership. It details the specific legal services we will provide and the mutual responsibilities needed to move your claim forward effectively. Please take a moment to review it before we meet.</p><p>When you're ready, you can book an appointment with us using this link: <a href='{{calendly_link}}'>Book a Consultation</a>. At that meeting, we'll go through the agreement in detail and discuss next steps.</p><p>Andrew Richards</p>",
+        "attachments": [
+          {
+            "fileName": "{{1.client_full_name}} [Retainer Agreement].pdf",
+            "data": "{{7.data}}"
+          }
+        ]
+      },
+      "metadata": { "designer": { "x": 3600, "y": 0 } },
+      "label": "Send Personalized Email with Retainer PDF"
+    },
+    {
+      "id": 16,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/matters/{{1.matter_id}}",
+        "method": "PATCH",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "data": {
+            "stage": "Retainer Sent"
+          }
+        }
+      },
+      "metadata": { "designer": { "x": 3900, "y": 0 } },
+      "label": "Update Stage → Retainer Sent"
+    },
+    {
+      "id": 17,
+      "module": "http:ActionSendData",
+      "version": 3,
+      "parameters": {},
+      "mapper": {
+        "url": "https://app.clio.com/api/v4/notes",
+        "method": "POST",
+        "headers": [
+          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
+          { "name": "Content-Type", "value": "application/json" }
+        ],
+        "body": {
+          "data": {
+            "detail": "[AUTOMATED] Intake pipeline completed at {{formatDate(now; 'YYYY-MM-DD HH:mm')}}. Custom fields updated, retainer generated via doc automation, SOL entries (8yr + 3yr) calendared, personalized email sent to client with retainer PDF and seasonal Calendly link.",
+            "matter": { "id": "{{1.matter_id}}" },
+            "type": "StatusNote"
+          }
+        }
+      },
+      "metadata": { "designer": { "x": 4200, "y": 0 } },
+      "label": "Create Audit Trail Note on Matter"
+    }
+  ],
+  "metadata": {
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "sequential": true,
+      "confidential": false
+    }
+  }
+}
