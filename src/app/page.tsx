@@ -12,7 +12,18 @@ import {
   Zap,
   Clock,
   Shield,
+  Brain,
+  Mail,
+  Calendar,
+  ArrowRight,
+  Play,
+  ChevronRight,
+  Database,
+  FileCheck,
+  Users,
+  TrendingUp,
 } from "lucide-react";
+import { DEMO_REPORTS, DEMO_EXTRACTIONS } from "@/lib/demo-data";
 
 export default function UploadPage() {
   const router = useRouter();
@@ -21,6 +32,7 @@ export default function UploadPage() {
   const [loading, setLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showDemo, setShowDemo] = useState(false);
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (acceptedFiles.length > 0) {
@@ -33,7 +45,7 @@ export default function UploadPage() {
     onDrop,
     accept: { "application/pdf": [".pdf"] },
     maxFiles: 1,
-    maxSize: 20 * 1024 * 1024, // 20MB
+    maxSize: 20 * 1024 * 1024,
   });
 
   const handleSubmit = async () => {
@@ -50,7 +62,6 @@ export default function UploadPage() {
     setError(null);
 
     try {
-      // Convert PDF to base64
       setLoadingMessage("Encoding PDF...");
       const buffer = await file.arrayBuffer();
       const base64 = btoa(
@@ -60,12 +71,10 @@ export default function UploadPage() {
         )
       );
 
-      // Store the PDF for the verification page viewer
       sessionStorage.setItem("uploadedPdf", base64);
       sessionStorage.setItem("uploadedPdfName", file.name);
 
-      // Send to extraction API
-      setLoadingMessage("Sending to AI for extraction...");
+      setLoadingMessage("AI is reading the police report...");
       const response = await fetch("/api/extract", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -84,8 +93,6 @@ export default function UploadPage() {
       }
 
       const data = await response.json();
-
-      // Store extraction result and navigate to verification
       sessionStorage.setItem("extractionResult", JSON.stringify(data));
       sessionStorage.setItem("matterId", matterId.trim());
 
@@ -100,88 +107,107 @@ export default function UploadPage() {
     }
   };
 
+  const handleDemoSelect = (reportId: string) => {
+    const extraction = DEMO_EXTRACTIONS[reportId];
+    if (!extraction) return;
+
+    sessionStorage.setItem(
+      "extractionResult",
+      JSON.stringify({ extraction })
+    );
+    sessionStorage.setItem("matterId", "DEMO-001");
+    sessionStorage.removeItem("uploadedPdf");
+    sessionStorage.setItem("uploadedPdfName", `${reportId}.pdf`);
+    sessionStorage.setItem("demoMode", "true");
+    sessionStorage.setItem("demoReportId", reportId);
+    router.push("/verify");
+  };
+
   return (
-    <div className="space-y-8">
-      {/* Hero */}
-      <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold text-navy-900">
-          Police Report Processing
+    <div className="space-y-12">
+      {/* Hero Section */}
+      <div className="text-center space-y-4 pt-4">
+        <div className="inline-flex items-center gap-2 bg-gold-50 border border-gold-200 rounded-full px-4 py-1.5 text-sm text-gold-700 font-medium">
+          <Zap className="w-3.5 h-3.5" />
+          Intake time reduced from 45 min to under 2 min
+        </div>
+        <h1 className="text-4xl md:text-5xl font-bold text-navy-900 tracking-tight">
+          AI-Powered Case Intake
         </h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
-          Upload a NYC Police Accident Report (MV-104AN) to automatically
-          extract case data, update Clio Manage, and generate a retainer
-          agreement.
+        <p className="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
+          Upload a NYC Police Accident Report. AI extracts every detail, your
+          team verifies, and the retainer agreement is generated automatically
+          in Clio Manage.
         </p>
       </div>
 
-      {/* Feature Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 max-w-3xl mx-auto">
-        <div className="flex items-start gap-3 bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-          <Zap className="w-5 h-5 text-gold-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-navy-800 text-sm">~2 Min Intake</p>
-            <p className="text-xs text-gray-500">Down from 45 minutes</p>
+      {/* Workflow Steps */}
+      <div className="grid grid-cols-2 md:grid-cols-6 gap-3 max-w-4xl mx-auto">
+        {[
+          { icon: Upload, label: "Upload PDF", color: "text-blue-600 bg-blue-50" },
+          { icon: Brain, label: "AI Extracts", color: "text-purple-600 bg-purple-50" },
+          { icon: Shield, label: "Human Verifies", color: "text-amber-600 bg-amber-50" },
+          { icon: Database, label: "Clio Updated", color: "text-emerald-600 bg-emerald-50" },
+          { icon: FileCheck, label: "Retainer Generated", color: "text-navy-600 bg-navy-50" },
+          { icon: Mail, label: "Client Emailed", color: "text-rose-600 bg-rose-50" },
+        ].map((step, i) => (
+          <div key={i} className="flex flex-col items-center gap-2 relative">
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${step.color}`}>
+              <step.icon className="w-5 h-5" />
+            </div>
+            <span className="text-xs font-medium text-gray-600 text-center">
+              {step.label}
+            </span>
+            {i < 5 && (
+              <ChevronRight className="hidden md:block absolute right-[-14px] top-3 w-4 h-4 text-gray-300" />
+            )}
           </div>
-        </div>
-        <div className="flex items-start gap-3 bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-          <Shield className="w-5 h-5 text-emerald-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-navy-800 text-sm">
-              Human-in-the-Loop
-            </p>
-            <p className="text-xs text-gray-500">Verify before processing</p>
-          </div>
-        </div>
-        <div className="flex items-start gap-3 bg-white rounded-lg p-4 shadow-sm border border-gray-100">
-          <Clock className="w-5 h-5 text-blue-500 mt-0.5 flex-shrink-0" />
-          <div>
-            <p className="font-medium text-navy-800 text-sm">
-              End-to-End Auto
-            </p>
-            <p className="text-xs text-gray-500">
-              Retainer + email + calendar
-            </p>
-          </div>
-        </div>
+        ))}
       </div>
 
-      {/* Upload Area */}
-      <div className="max-w-2xl mx-auto space-y-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 space-y-6">
-          <h2 className="text-lg font-semibold text-navy-800">
-            1. Upload Police Report
-          </h2>
+      {/* Main Content: Two columns */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        {/* Left: Upload */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-navy-900">
+              Process a Report
+            </h2>
+            <span className="text-xs bg-emerald-50 text-emerald-700 font-medium px-2.5 py-1 rounded-full">
+              Live Mode
+            </span>
+          </div>
 
           {/* Dropzone */}
           <div
             {...getRootProps()}
-            className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
+            className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
               isDragActive
                 ? "border-gold-400 bg-gold-50"
                 : file
                 ? "border-emerald-300 bg-emerald-50"
-                : "border-gray-300 hover:border-gold-400 hover:bg-gray-50"
+                : "border-gray-200 hover:border-gold-400 hover:bg-gray-50"
             }`}
           >
             <input {...getInputProps()} />
             {file ? (
               <div className="space-y-2">
-                <CheckCircle2 className="w-10 h-10 text-emerald-500 mx-auto" />
+                <CheckCircle2 className="w-8 h-8 text-emerald-500 mx-auto" />
                 <p className="text-sm font-medium text-emerald-700">
                   {file.name}
                 </p>
-                <p className="text-xs text-gray-500">
-                  {(file.size / 1024 / 1024).toFixed(2)} MB &middot; Click or
-                  drop to replace
+                <p className="text-xs text-gray-400">
+                  {(file.size / 1024 / 1024).toFixed(2)} MB &middot; Click to
+                  replace
                 </p>
               </div>
             ) : (
               <div className="space-y-2">
-                <Upload className="w-10 h-10 text-gray-400 mx-auto" />
+                <Upload className="w-8 h-8 text-gray-400 mx-auto" />
                 <p className="text-sm text-gray-600">
                   {isDragActive
                     ? "Drop the PDF here..."
-                    : "Drag & drop a police report PDF, or click to browse"}
+                    : "Drag & drop a police report PDF"}
                 </p>
                 <p className="text-xs text-gray-400">
                   MV-104AN forms &middot; Max 20MB
@@ -192,45 +218,40 @@ export default function UploadPage() {
 
           {/* Matter ID */}
           <div>
-            <h2 className="text-lg font-semibold text-navy-800 mb-3">
-              2. Enter Clio Matter ID
-            </h2>
-            <div className="flex gap-3">
-              <div className="relative flex-1">
-                <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  value={matterId}
-                  onChange={(e) => {
-                    setMatterId(e.target.value);
-                    setError(null);
-                  }}
-                  placeholder="e.g., 2415839201"
-                  className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-gold-400 focus:border-gold-400 outline-none"
-                />
-              </div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">
+              Clio Matter ID
+            </label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={matterId}
+                onChange={(e) => {
+                  setMatterId(e.target.value);
+                  setError(null);
+                }}
+                placeholder="e.g., 2415839201"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-gold-400 focus:border-gold-400 outline-none"
+              />
             </div>
-            <p className="text-xs text-gray-400 mt-1.5">
-              Find this in Clio Manage under the Matter details
-            </p>
           </div>
 
           {/* Error */}
           {error && (
-            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3 animate-slide-up">
+            <div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-xl p-3 animate-slide-up">
               <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
               <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
-          {/* Submit Button */}
+          {/* Submit */}
           <button
             onClick={handleSubmit}
             disabled={loading || !file || !matterId.trim()}
-            className={`w-full py-3 px-6 rounded-lg font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
+            className={`w-full py-3 px-6 rounded-xl font-semibold text-sm transition-all flex items-center justify-center gap-2 ${
               loading || !file || !matterId.trim()
-                ? "bg-gray-200 text-gray-400 cursor-not-allowed"
-                : "bg-navy-900 text-white hover:bg-navy-800 active:bg-navy-700 shadow-sm"
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-navy-900 text-white hover:bg-navy-800 shadow-md hover:shadow-lg"
             }`}
           >
             {loading ? (
@@ -246,6 +267,116 @@ export default function UploadPage() {
             )}
           </button>
         </div>
+
+        {/* Right: Demo Mode */}
+        <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-6 space-y-5">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-navy-900">
+              Try a Demo Report
+            </h2>
+            <span className="text-xs bg-purple-50 text-purple-700 font-medium px-2.5 py-1 rounded-full">
+              Instant Preview
+            </span>
+          </div>
+          <p className="text-sm text-gray-500">
+            See the full extraction and verification flow instantly with one of
+            5 pre-processed police reports covering all case types.
+          </p>
+
+          <div className="space-y-2.5">
+            {DEMO_REPORTS.map((report) => (
+              <button
+                key={report.id}
+                onClick={() => handleDemoSelect(report.id)}
+                className="w-full text-left p-3.5 rounded-xl border border-gray-200 hover:border-gold-400 hover:bg-gold-50/50 transition-all group"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold text-navy-800 group-hover:text-navy-900">
+                        {report.label}
+                      </span>
+                      <span
+                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${
+                          report.injured > 0
+                            ? "bg-red-100 text-red-700"
+                            : report.type === "Pedestrian" || report.type === "Bicyclist"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-gray-100 text-gray-600"
+                        }`}
+                      >
+                        {report.badge}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {report.client} &middot; {report.subtitle}
+                    </p>
+                  </div>
+                  <ArrowRight className="w-4 h-4 text-gray-300 group-hover:text-gold-500 transition-colors flex-shrink-0" />
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ROI Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto">
+        {[
+          {
+            icon: Clock,
+            stat: "~2 min",
+            label: "Per case intake",
+            detail: "Down from 45 min",
+          },
+          {
+            icon: TrendingUp,
+            stat: "37.5 hrs",
+            label: "Saved per month",
+            detail: "At 50 cases/month",
+          },
+          {
+            icon: Users,
+            stat: "95%+",
+            label: "Extraction accuracy",
+            detail: "Human-verified",
+          },
+          {
+            icon: FileCheck,
+            stat: "100%",
+            label: "Automated post-verify",
+            detail: "Zero manual steps",
+          },
+        ].map((item, i) => (
+          <div
+            key={i}
+            className="bg-white rounded-xl border border-gray-200 p-4 text-center"
+          >
+            <item.icon className="w-5 h-5 text-gold-500 mx-auto mb-2" />
+            <p className="text-2xl font-bold text-navy-900">{item.stat}</p>
+            <p className="text-xs font-medium text-gray-600">{item.label}</p>
+            <p className="text-[10px] text-gray-400 mt-0.5">{item.detail}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* Bottom Links */}
+      <div className="flex justify-center gap-4 text-sm">
+        <a
+          href="/architecture"
+          className="text-navy-600 hover:text-navy-800 font-medium flex items-center gap-1"
+        >
+          View System Architecture
+          <ChevronRight className="w-3.5 h-3.5" />
+        </a>
+        <span className="text-gray-300">|</span>
+        <a
+          href="/setup"
+          className="text-navy-600 hover:text-navy-800 font-medium flex items-center gap-1"
+        >
+          Clio Setup Guide
+          <ChevronRight className="w-3.5 h-3.5" />
+        </a>
       </div>
     </div>
   );

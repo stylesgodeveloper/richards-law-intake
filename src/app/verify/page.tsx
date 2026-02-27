@@ -574,6 +574,30 @@ export default function VerifyPage() {
             </section>
           </div>
 
+          {/* Preview Links */}
+          <div className="border-t border-gray-200 px-4 py-3 bg-navy-50 flex items-center gap-3">
+            <span className="text-xs text-navy-600 font-medium">Preview:</span>
+            <button
+              onClick={() => {
+                sessionStorage.setItem("extractionResult", JSON.stringify({ extraction }));
+                router.push("/retainer-preview");
+              }}
+              className="text-xs text-navy-700 hover:text-navy-900 font-medium underline underline-offset-2"
+            >
+              Retainer Agreement
+            </button>
+            <span className="text-gray-300">|</span>
+            <button
+              onClick={() => {
+                sessionStorage.setItem("extractionResult", JSON.stringify({ extraction }));
+                router.push("/email-preview");
+              }}
+              className="text-xs text-navy-700 hover:text-navy-900 font-medium underline underline-offset-2"
+            >
+              Client Email
+            </button>
+          </div>
+
           {/* Actions */}
           <div className="border-t border-gray-200 p-4 bg-gray-50 space-y-3">
             {error && (
