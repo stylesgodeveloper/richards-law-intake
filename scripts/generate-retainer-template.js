@@ -3,11 +3,12 @@
  * with Clio Manage merge fields and conditional logic.
  *
  * Usage: node scripts/generate-retainer-template.js
- * Output: retainer-template.docx (upload this to Clio Documents > Templates)
+ * Output: retainer-template.docx (upload this to Clio)
  *
- * IMPORTANT: After uploading, verify merge field codes match your Clio custom fields.
- * Clio merge fields use the syntax: <<CF:FieldName>> for custom fields
- * and <<Matter.ResponsibleAttorney.Name>> for built-in fields.
+ * Clio merge field syntax (from Settings > Documents > Merge Fields):
+ *   << Matter.CustomField.Fieldname >>  for custom fields
+ *   << Matter.ResponsibleAttorney.Name >>  for built-in fields
+ *   << Matter.Client.Name >>  for client info
  */
 
 const {
@@ -15,10 +16,8 @@ const {
   Packer,
   Paragraph,
   TextRun,
-  HeadingLevel,
   AlignmentType,
   UnderlineType,
-  BorderStyle,
 } = require("docx");
 const fs = require("fs");
 const path = require("path");
@@ -70,7 +69,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:ClientFullName>>",
+                text: "<< Matter.CustomField.Clientfullname >>",
                 bold: true,
                 size: 22,
               }),
@@ -79,7 +78,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:AccidentDate>>",
+                text: "<< Matter.CustomField.Accidentdate >>",
                 bold: true,
                 size: 22,
               }),
@@ -88,7 +87,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:DefendantName>>",
+                text: "<< Matter.CustomField.Defendantname >>",
                 bold: true,
                 size: 22,
               }),
@@ -97,7 +96,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:ClientGender=Male?his:her>>",
+                text: "<< Matter.CustomField.Clientgender >>",
                 bold: true,
                 size: 22,
               }),
@@ -114,7 +113,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:ClientGender=Male?his:her>>",
+                text: "<< Matter.CustomField.Clientgender >>",
                 bold: true,
                 size: 22,
               }),
@@ -144,7 +143,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:ClientGender=Male?his:her>>",
+                text: "<< Matter.CustomField.Clientgender >>",
                 bold: true,
                 size: 22,
               }),
@@ -177,7 +176,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:AccidentLocation>>",
+                text: "<< Matter.CustomField.Accidentlocation >>",
                 bold: true,
                 size: 22,
               }),
@@ -186,7 +185,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:ClientPlateNumber>>",
+                text: "<< Matter.CustomField.Clientplatenumber >>",
                 bold: true,
                 size: 22,
               }),
@@ -207,37 +206,31 @@ async function generate() {
             ],
           }),
 
+          // NOTE: Clio's document automation may not support inline conditionals.
+          // If conditionals don't work, the Make.com pipeline will handle this
+          // by choosing which paragraph to include based on NumberInjured value.
+
           // Conditional: Injured > 0
           new Paragraph({
             spacing: { after: 200 },
             children: [
               new TextRun({
-                text: "<<CF:NumberInjured!=0?",
-                size: 22,
-                color: "888888",
-              }),
-              new TextRun({
                 text: "Additionally, since the motor vehicle accident involved an injured person, Attorney will also investigate potential bodily injury claims and review relevant medical records to substantiate non-economic damages.",
                 size: 22,
               }),
-              new TextRun({ text: ">>", size: 22, color: "888888" }),
             ],
           }),
 
-          // Conditional: Injured = 0
+          // Note about conditional logic
           new Paragraph({
             spacing: { after: 200 },
             children: [
               new TextRun({
-                text: "<<CF:NumberInjured=0?",
-                size: 22,
-                color: "888888",
+                text: "[NOTE: The above paragraph is included when << Matter.CustomField.Numberinjured >> > 0. When no injuries are reported, replace with: \"However, since the motor vehicle accident involved no reported injured people, the scope of this engagement is strictly limited to the recovery of property damage and loss of use.\"]",
+                size: 18,
+                color: "999999",
+                italics: true,
               }),
-              new TextRun({
-                text: "However, since the motor vehicle accident involved no reported injured people, the scope of this engagement is strictly limited to the recovery of property damage and loss of use.",
-                size: 22,
-              }),
-              new TextRun({ text: ">>", size: 22, color: "888888" }),
             ],
           }),
 
@@ -273,7 +266,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:ClientGender=Male?he:she>>",
+                text: "<< Matter.CustomField.Clientgender >>",
                 bold: true,
                 size: 22,
               }),
@@ -306,7 +299,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:ClientGender=Male?his:her>>",
+                text: "<< Matter.CustomField.Clientgender >>",
                 bold: true,
                 size: 22,
               }),
@@ -349,7 +342,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:StatuteOfLimitationsDate>>",
+                text: "<< Matter.CustomField.Statuteoflimitationsdate >>",
                 bold: true,
                 size: 22,
               }),
@@ -382,7 +375,7 @@ async function generate() {
                 size: 22,
               }),
               new TextRun({
-                text: "<<CF:ClientGender=Male?his:her>>",
+                text: "<< Matter.CustomField.Clientgender >>",
                 bold: true,
                 size: 22,
               }),
@@ -419,7 +412,7 @@ async function generate() {
             spacing: { after: 300 },
             children: [
               new TextRun({
-                text: "<<CF:ClientFullName>>",
+                text: "<< Matter.CustomField.Clientfullname >>",
                 bold: true,
                 size: 22,
               }),
@@ -440,7 +433,7 @@ async function generate() {
             spacing: { after: 200 },
             children: [
               new TextRun({
-                text: "<<Matter.ResponsibleAttorney.Name>>",
+                text: "<< Matter.ResponsibleAttorney.Name >>",
                 bold: true,
                 size: 22,
               }),
@@ -455,20 +448,16 @@ async function generate() {
   const outputPath = path.join(__dirname, "..", "retainer-template.docx");
   fs.writeFileSync(outputPath, buffer);
   console.log(`Retainer template generated: ${outputPath}`);
-  console.log("\nNext steps:");
-  console.log("1. Upload this .docx to Clio: Documents → Templates → Upload");
-  console.log("2. Verify merge field codes match your Clio custom fields");
-  console.log("3. Test with a sample matter that has custom fields populated");
-  console.log("\nMerge fields used:");
-  console.log("  - <<CF:ClientFullName>>");
-  console.log("  - <<CF:ClientGender>> (with conditional: Male?his:her)");
-  console.log("  - <<CF:AccidentDate>>");
-  console.log("  - <<CF:DefendantName>>");
-  console.log("  - <<CF:AccidentLocation>>");
-  console.log("  - <<CF:ClientPlateNumber>>");
-  console.log("  - <<CF:NumberInjured>> (conditional: !=0 and =0)");
-  console.log("  - <<CF:StatuteOfLimitationsDate>>");
-  console.log("  - <<Matter.ResponsibleAttorney.Name>>");
+  console.log("\nMerge fields used (matching Clio's exact syntax):");
+  console.log("  - << Matter.CustomField.Clientfullname >>");
+  console.log("  - << Matter.CustomField.Clientgender >> (his/her values)");
+  console.log("  - << Matter.CustomField.Accidentdate >>");
+  console.log("  - << Matter.CustomField.Defendantname >>");
+  console.log("  - << Matter.CustomField.Accidentlocation >>");
+  console.log("  - << Matter.CustomField.Clientplatenumber >>");
+  console.log("  - << Matter.CustomField.Numberinjured >> (for conditional logic)");
+  console.log("  - << Matter.CustomField.Statuteoflimitationsdate >>");
+  console.log("  - << Matter.ResponsibleAttorney.Name >>");
 }
 
 generate().catch(console.error);

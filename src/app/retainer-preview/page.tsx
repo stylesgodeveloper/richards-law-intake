@@ -23,6 +23,7 @@ export default function RetainerPreviewPage() {
   const router = useRouter();
   const [extraction, setExtraction] = useState<ExtractionResult | null>(null);
   const [matterId, setMatterId] = useState("");
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const stored = sessionStorage.getItem("extractionResult");
@@ -39,6 +40,32 @@ export default function RetainerPreviewPage() {
       router.push("/");
     }
   }, [router]);
+
+  const handleDownloadPdf = async () => {
+    if (!extraction) return;
+    setDownloading(true);
+    try {
+      const solDate = extraction.statute_of_limitations_date_8yr ||
+        (extraction.accident_details.date ? calculateSOLDate(extraction.accident_details.date) : null);
+      const res = await fetch("/api/generate-retainer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          extraction: { ...extraction, statute_of_limitations_date_8yr: solDate },
+        }),
+      });
+      if (!res.ok) throw new Error("PDF generation failed");
+      const data = await res.json();
+      const link = document.createElement("a");
+      link.href = `data:application/pdf;base64,${data.pdf_base64}`;
+      link.download = data.filename;
+      link.click();
+    } catch (err) {
+      alert("Failed to generate PDF. Please try again.");
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   if (!extraction) return null;
 
@@ -89,6 +116,14 @@ export default function RetainerPreviewPage() {
           </div>
         </div>
         <div className="flex gap-2 ml-12 sm:ml-0">
+          <button
+            onClick={handleDownloadPdf}
+            disabled={downloading}
+            className="px-3 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 flex items-center gap-2 disabled:opacity-50"
+          >
+            <Download className={`w-4 h-4 ${downloading ? "animate-pulse" : ""}`} aria-hidden="true" />
+            <span className="hidden sm:inline">{downloading ? "Generating..." : "Download PDF"}</span>
+          </button>
           <button
             onClick={() => window.print()}
             className="px-3 py-2 text-sm font-medium border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-100 flex items-center gap-2"

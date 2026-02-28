@@ -128,51 +128,44 @@
     },
     {
       "id": 5,
-      "module": "builtin:Sleep",
-      "version": 1,
-      "parameters": {},
-      "mapper": {
-        "timeout": 20
-      },
-      "metadata": { "designer": { "x": 1200, "y": 0 } },
-      "label": "Wait 20s for Doc Generation"
-    },
-    {
-      "id": 6,
       "module": "http:ActionSendData",
       "version": 3,
       "parameters": {},
       "mapper": {
-        "url": "https://app.clio.com/api/v4/documents",
-        "method": "GET",
+        "url": "{{APP_URL}}/api/generate-retainer",
+        "method": "POST",
         "headers": [
-          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" },
           { "name": "Content-Type", "value": "application/json" }
         ],
-        "qs": [
-          { "name": "matter_id", "value": "{{1.matter_id}}" },
-          { "name": "order", "value": "created_at(desc)" },
-          { "name": "limit", "value": "1" },
-          { "name": "fields", "value": "id,name,latest_document_version{id,uuid}" }
-        ]
+        "body": {
+          "extraction": {
+            "client_party": {
+              "full_name": "{{1.client_full_name}}",
+              "first_name": "{{1.client_first_name}}",
+              "last_name": "{{1.client_last_name}}",
+              "sex": "{{1.client_gender}}",
+              "role": "{{1.client_role}}",
+              "plate_number": "{{1.client_plate_number}}"
+            },
+            "adverse_party": {
+              "full_name": "{{1.defendant_name}}"
+            },
+            "accident_details": {
+              "date": "{{1.accident_date}}",
+              "full_location": "{{1.accident_location}}",
+              "num_injured": "{{1.number_injured}}",
+              "description_verbatim": "{{1.accident_description}}",
+              "accident_type": "{{1.accident_type}}"
+            },
+            "statute_of_limitations_date_8yr": "{{1.statute_of_limitations_date}}"
+          }
+        }
       },
-      "metadata": { "designer": { "x": 1500, "y": 0 } },
-      "label": "Find Generated Retainer Document"
-    },
-    {
-      "id": 7,
-      "module": "http:ActionSendData",
-      "version": 3,
-      "parameters": {},
-      "mapper": {
-        "url": "https://app.clio.com/api/v4/documents/{{6.data[0].id}}/download",
-        "method": "GET",
-        "headers": [
-          { "name": "Authorization", "value": "Bearer {{CLIO_ACCESS_TOKEN}}" }
-        ]
+      "metadata": {
+        "designer": { "x": 1200, "y": 0 },
+        "note": "Generates retainer PDF via our app API (replaces Clio Draft doc automation). Returns base64 PDF."
       },
-      "metadata": { "designer": { "x": 1800, "y": 0 } },
-      "label": "Download Retainer PDF"
+      "label": "Generate Retainer PDF via App API"
     },
     {
       "id": 8,
@@ -334,8 +327,8 @@
         "content": "<p>Hello {{1.client_first_name}},</p><p>I hope you're doing well. I wanted to follow up regarding your {{1.accident_type}} on {{formatDate(1.accident_date; 'MMMM D, YYYY')}}. I know dealing with the aftermath of an accident is stressful, and I want to make sure we move things forward as smoothly as possible for you.</p><p>{{14.data.content[0].text}}</p><p>Attached is your Retainer Agreement, which sets the foundation for our partnership. It details the specific legal services we will provide and the mutual responsibilities needed to move your claim forward effectively. Please take a moment to review it before we meet.</p><p>When you're ready, you can book an appointment with us using this link: <a href='{{calendly_link}}'>Book a Consultation</a>. At that meeting, we'll go through the agreement in detail and discuss next steps.</p><p>Andrew Richards</p>",
         "attachments": [
           {
-            "fileName": "{{1.client_full_name}} [Retainer Agreement].pdf",
-            "data": "{{7.data}}"
+            "fileName": "{{5.data.filename}}",
+            "data": "{{base64decode(5.data.pdf_base64)}}"
           }
         ]
       },
@@ -377,7 +370,7 @@
         ],
         "body": {
           "data": {
-            "detail": "[AUTOMATED] Intake pipeline completed at {{formatDate(now; 'YYYY-MM-DD HH:mm')}}. Custom fields updated, retainer generated via doc automation, SOL entries (8yr + 3yr) calendared, personalized email sent to client with retainer PDF and seasonal Calendly link.",
+            "detail": "[AUTOMATED] Intake pipeline completed at {{formatDate(now; 'YYYY-MM-DD HH:mm')}}. Custom fields updated, retainer PDF generated (with conditional injury/property-damage paragraphs + gender pronouns), SOL entries (8yr + 3yr) calendared, personalized email sent to client with retainer PDF and seasonal Calendly link.",
             "matter": { "id": "{{1.matter_id}}" },
             "type": "StatusNote"
           }
