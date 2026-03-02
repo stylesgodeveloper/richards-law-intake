@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
+import { computeViabilityScore } from "@/lib/scoring-engine";
+import { generateFollowUpChecklist } from "@/lib/follow-up-tasks";
 
 export const maxDuration = 120;
 
@@ -122,17 +124,63 @@ async function createAuditNote(clioToken: string, matterId: string, detail: stri
   }
 }
 
+// Helper to create a Clio task
+async function createClioTask(
+  clioToken: string,
+  matterId: string,
+  name: string,
+  description: string,
+  priority: "High" | "Normal" | "Low",
+  dueInDays: number
+) {
+  const dueDate = new Date();
+  dueDate.setDate(dueDate.getDate() + dueInDays);
+  const res = await fetch("https://app.clio.com/api/v4/tasks", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${clioToken}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      data: {
+        name,
+        description,
+        priority,
+        due_at: dueDate.toISOString(),
+        matter: { id: parseInt(matterId) },
+      },
+    }),
+  });
+  if (!res.ok) {
+    console.warn(`Task creation failed: ${res.status}`);
+  }
+}
+
+const PRIORITY_MAP: Record<string, "High" | "Normal" | "Low"> = {
+  high: "High",
+  medium: "Normal",
+  low: "Low",
+};
+
+const DUE_DAYS: Record<string, number> = {
+  high: 7,
+  medium: 14,
+  low: 30,
+};
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { matter_id, extraction } = body;
+    const { matter_id, extraction, client_email } = body;
 
-    if (!matter_id || !extraction) {
+    if (!extraction) {
       return NextResponse.json(
-        { error: "Missing matter_id or extraction data" },
+        { error: "Missing extraction data" },
         { status: 400 }
       );
     }
+
+    const autoCreate = !matter_id || matter_id === "auto";
 
     const clioToken = process.env.CLIO_ACCESS_TOKEN;
     const makeWebhook = process.env.MAKE_WEBHOOK_PROCESS;
@@ -142,7 +190,7 @@ export async function POST(request: NextRequest) {
     const clientFullName =
       extraction.client_party.full_name ||
       `${extraction.client_party.first_name} ${extraction.client_party.last_name}`;
-    const clientGender = extraction.client_party.sex === "F" ? "Female" : "Male";
+    const clientGender = extraction.client_party.sex === "F" ? "her" : "his";
     const defendantName =
       extraction.adverse_party.full_name ||
       `${extraction.adverse_party.first_name} ${extraction.adverse_party.last_name}`;
@@ -163,30 +211,95 @@ export async function POST(request: NextRequest) {
       .filter(Boolean)
       .join(", ");
 
-    // Calculate SOL dates
+    // Calculate SOL dates — use type-aware SOL from scoring data
     const accidentDate = extraction.accident_details.date;
-    let sol8yr = extraction.statute_of_limitations_date_8yr;
-    let sol3yr = null;
+    const reportType = extraction.report_type || "general_incident";
+    const SOL_YEARS: Record<string, number> = {
+      vehicle_accident: 3,
+      slip_and_fall: 3,
+      assault: 1,
+      dog_bite: 3,
+      general_incident: 3,
+    };
+    const solYears = SOL_YEARS[reportType] || 3;
+    let solPrimary = extraction.statute_of_limitations_date_8yr; // may be pre-set from extraction
+    let solSecondary = null;
     if (accidentDate) {
-      const d8 = new Date(accidentDate);
-      d8.setFullYear(d8.getFullYear() + 8);
-      sol8yr = sol8yr || d8.toISOString().split("T")[0];
-      const d3 = new Date(accidentDate);
-      d3.setFullYear(d3.getFullYear() + 3);
-      sol3yr = d3.toISOString().split("T")[0];
+      const dPrimary = new Date(accidentDate);
+      dPrimary.setFullYear(dPrimary.getFullYear() + solYears);
+      solPrimary = solPrimary || dPrimary.toISOString().split("T")[0];
+      // Also calendar a secondary reminder (6 months before SOL)
+      const dSecondary = new Date(dPrimary);
+      dSecondary.setMonth(dSecondary.getMonth() - 6);
+      solSecondary = dSecondary.toISOString().split("T")[0];
     }
+
+    // Compute case viability score
+    const viabilityScore = computeViabilityScore(extraction);
+
+    // Generate follow-up tasks
+    const followUpTasks = generateFollowUpChecklist(extraction);
 
     // ===== OPTION 1: If Make.com webhook is configured, delegate to it =====
     if (makeWebhook) {
+      // Flatten payload so Make.com can access all fields at the top level
+      // Build flat payload, omitting empty values so Clio doesn't reject them
+      const allFields: Record<string, string> = {
+        auto_create: autoCreate ? "true" : "false",
+        matter_id: autoCreate ? "" : matter_id,
+        // Client info (used for contact + matter creation when auto_create)
+        client_email: client_email || "",
+        client_first_name: extraction.client_party.first_name || "",
+        client_last_name: extraction.client_party.last_name || "",
+        // Client party
+        client_full_name: clientFullName,
+        client_gender: extraction.client_party.sex === "F" ? "her" : "his",
+        client_address: clientAddress,
+        client_dob: extraction.client_party.date_of_birth || "",
+        client_drivers_license: extraction.client_party.drivers_license || "",
+        client_plate_number: extraction.client_party.plate_number || "",
+        client_vehicle: extraction.client_party.vehicle_year_make_model || "",
+        // Adverse party
+        defendant_name: defendantName,
+        defendant_address: defendantAddress,
+        defendant_vehicle: extraction.adverse_party.vehicle_year_make_model || "",
+        // Accident details
+        accident_date: accidentDate || "",
+        accident_location: extraction.accident_details.full_location || "",
+        accident_description: extraction.accident_details.description_verbatim || "",
+        accident_type: extraction.accident_details.accident_type || "",
+        number_injured: String(extraction.accident_details.num_injured ?? 0),
+        injuries_description: extraction.client_party.injuries || "",
+        // Report metadata
+        police_report_number: extraction.report_metadata.report_number || "",
+        officer_name: extraction.report_metadata.officer_name || "",
+        precinct: extraction.report_metadata.precinct || "",
+        // SOL dates
+        statute_of_limitations_date: solPrimary || "",
+        sol_3yr: solSecondary || "",
+        // Matter description (used for auto-creation)
+        matter_description: `${clientFullName} v. ${defendantName}`,
+        // AI Case Viability Score
+        case_viability_score: String(viabilityScore.total_score),
+        case_viability_category: viabilityScore.category,
+        case_viability_settlement: viabilityScore.settlement_range,
+        case_viability_recommendation: viabilityScore.recommendation,
+        follow_up_tasks: JSON.stringify(followUpTasks),
+        follow_up_task_count: String(followUpTasks.length),
+      };
+      // Remove empty values to avoid Clio "Invalid parameter" errors
+      const flatPayload: Record<string, string> = {
+        auto_create: autoCreate ? "true" : "false",
+        matter_id: autoCreate ? "" : matter_id,
+      };
+      for (const [key, val] of Object.entries(allFields)) {
+        if (val !== "") flatPayload[key] = val;
+      }
+
       const response = await fetch(makeWebhook, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          matter_id,
-          extraction,
-          sol_3yr: sol3yr,
-          sol_8yr: sol8yr,
-        }),
+        body: JSON.stringify(flatPayload),
       });
 
       if (!response.ok) {
@@ -232,7 +345,7 @@ export async function POST(request: NextRequest) {
           PoliceReportNumber: extraction.report_metadata.report_number,
           OfficerName: extraction.report_metadata.officer_name,
           Precinct: extraction.report_metadata.precinct,
-          StatuteOfLimitationsDate: sol8yr,
+          StatuteOfLimitationsDate: solPrimary,
         });
         steps.push({ step: "update_custom_fields", status: "completed", detail: "20 fields updated" });
       } catch (err) {
@@ -256,32 +369,32 @@ export async function POST(request: NextRequest) {
       }
 
       // Step 5: Create SOL calendar entries
-      if (sol8yr) {
+      if (solPrimary) {
         try {
           await createCalendarEntry(
             clioToken,
             matter_id,
-            `SOL DEADLINE (8yr) — ${clientFullName} v. ${defendantName}`,
-            `Statute of Limitations expires. Accident date: ${accidentDate}. NOTE: Client requested 8-year SOL. Standard NY PI SOL is 3 years. Verify with supervising attorney.`,
-            sol8yr
+            `SOL DEADLINE (${solYears}yr) — ${clientFullName} v. ${defendantName}`,
+            `Statute of Limitations expires. Incident date: ${accidentDate}. Case type: ${reportType} (${solYears}-year SOL). Verify with supervising attorney.`,
+            solPrimary
           );
-          steps.push({ step: "calendar_8yr", status: "completed", detail: `SOL date: ${sol8yr}` });
+          steps.push({ step: "calendar_sol", status: "completed", detail: `SOL date: ${solPrimary} (${solYears}yr)` });
         } catch (err) {
-          steps.push({ step: "calendar_8yr", status: "error", detail: String(err) });
+          steps.push({ step: "calendar_sol", status: "error", detail: String(err) });
         }
       }
-      if (sol3yr) {
+      if (solSecondary) {
         try {
           await createCalendarEntry(
             clioToken,
             matter_id,
-            `SOL DEADLINE (3yr standard) — ${clientFullName} v. ${defendantName}`,
-            `Standard 3-year NY PI SOL. Accident date: ${accidentDate}. 8-year SOL also calendared per client request.`,
-            sol3yr
+            `SOL WARNING (6mo before) — ${clientFullName} v. ${defendantName}`,
+            `6 months until SOL deadline. Incident date: ${accidentDate}. SOL expires: ${solPrimary}.`,
+            solSecondary
           );
-          steps.push({ step: "calendar_3yr", status: "completed", detail: `SOL date: ${sol3yr}` });
+          steps.push({ step: "calendar_sol_warning", status: "completed", detail: `Warning date: ${solSecondary}` });
         } catch (err) {
-          steps.push({ step: "calendar_3yr", status: "error", detail: String(err) });
+          steps.push({ step: "calendar_sol_warning", status: "error", detail: String(err) });
         }
       }
 
@@ -291,14 +404,33 @@ export async function POST(request: NextRequest) {
         await createAuditNote(
           clioToken,
           matter_id,
-          `[AUTOMATED] Intake pipeline completed at ${now} UTC. Custom fields updated (20 fields), stage changed to Retainer Ready (triggers doc automation), SOL entries (8yr: ${sol8yr}, 3yr: ${sol3yr}) calendared. Client: ${clientFullName}, Defendant: ${defendantName}, Accident: ${accidentDate} at ${extraction.accident_details.full_location}.`
+          `[AUTOMATED] Intake pipeline completed at ${now} UTC. Custom fields updated, stage changed to Retainer Ready (triggers doc automation), SOL (${solYears}yr: ${solPrimary}) calendared. Case type: ${reportType}. Viability score: ${viabilityScore.total_score}/100 (${viabilityScore.category}). Client: ${clientFullName}, Defendant: ${defendantName}, Incident: ${accidentDate} at ${extraction.accident_details.full_location}.`
         );
         steps.push({ step: "audit_note", status: "completed" });
       } catch (err) {
         steps.push({ step: "audit_note", status: "error", detail: String(err) });
       }
 
-      // Step 7: Update stage to "Retainer Sent"
+      // Step 7: Create follow-up tasks
+      try {
+        let created = 0;
+        for (const task of followUpTasks) {
+          await createClioTask(
+            clioToken,
+            matter_id,
+            task.text,
+            `[${task.category.toUpperCase()}] ${task.text}`,
+            PRIORITY_MAP[task.priority] || "Normal",
+            DUE_DAYS[task.priority] || 14
+          );
+          created++;
+        }
+        steps.push({ step: "follow_up_tasks", status: "completed", detail: `${created} tasks created` });
+      } catch (err) {
+        steps.push({ step: "follow_up_tasks", status: "error", detail: String(err) });
+      }
+
+      // Step 8: Update stage to "Retainer Sent"
       try {
         await changeClioStage(clioToken, matter_id, "Retainer Sent");
         steps.push({ step: "stage_retainer_sent", status: "completed" });
@@ -319,14 +451,20 @@ export async function POST(request: NextRequest) {
       message: "Data verified and ready for processing (demo mode — no Clio token or Make.com webhook configured)",
       mapped_data: {
         matter_id,
+        client_email: client_email || "",
         client_full_name: clientFullName,
         client_gender: clientGender,
         defendant_name: defendantName,
         accident_date: accidentDate,
         accident_location: extraction.accident_details.full_location,
         number_injured: extraction.accident_details.num_injured,
-        sol_date_8yr: sol8yr,
-        sol_date_3yr: sol3yr,
+        sol_date_8yr: solPrimary,
+        sol_date_3yr: solSecondary,
+        viability_score: viabilityScore.total_score,
+        viability_category: viabilityScore.category,
+        viability_settlement_range: viabilityScore.settlement_range,
+        follow_up_tasks: followUpTasks,
+        follow_up_task_count: followUpTasks.length,
       },
     });
   } catch (err) {
