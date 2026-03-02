@@ -3,6 +3,20 @@ import type { ExtractionResult } from "@/lib/types";
 const CALENDLY_SUMMER_SPRING = "https://calendly.com/swans-santiago-p/summer-spring";
 const CALENDLY_WINTER_AUTUMN = "https://calendly.com/swans-santiago-p/winter-autumn";
 
+function toTitleCase(str: string): string {
+  const small = new Set(["at", "in", "on", "of", "the", "and", "for", "to", "a", "an"]);
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word, i) => {
+      if (i === 0 || !small.has(word)) {
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }
+      return word;
+    })
+    .join(" ");
+}
+
 function getSeasonalCalendlyLink(): { url: string; label: string } {
   const now = new Date();
   const month = now.getMonth() + 1;
@@ -41,18 +55,18 @@ function generateAccidentSummary(extraction: ExtractionResult): string {
 
   // Slip and fall
   if (rt === "slip_and_fall") {
-    const location = ad.full_location || "the property";
+    const location = ad.full_location ? toTitleCase(ad.full_location) : "the property";
     return `From the details shared, I understand that you were injured in a slip and fall at ${location}. Property owners have a legal obligation to maintain safe conditions, and we want to ensure that your rights are fully protected and that you receive fair compensation for your injuries.`;
   }
 
   // Assault
   if (rt === "assault") {
-    return `From the details shared, I understand that you were the victim of an assault${ad.full_location ? ` at ${ad.full_location}` : ""}. I want you to know that in addition to any criminal proceedings, you may be entitled to civil compensation for your injuries. We are here to advocate for you and guide you through this process.`;
+    return `From the details shared, I understand that you were the victim of an assault${ad.full_location ? ` at ${toTitleCase(ad.full_location)}` : ""}. I want you to know that in addition to any criminal proceedings, you may be entitled to civil compensation for your injuries. We are here to advocate for you and guide you through this process.`;
   }
 
   // Dog bite
   if (rt === "dog_bite") {
-    return `From the details shared, I understand that you were bitten by a dog${ad.full_location ? ` at ${ad.full_location}` : ""}. Under New York law, dog owners can be held liable for injuries caused by their animals. We want to ensure that your medical treatment is documented and that you receive full compensation for your injuries.`;
+    return `From the details shared, I understand that you were bitten by a dog${ad.full_location ? ` at ${toTitleCase(ad.full_location)}` : ""}. Under New York law, dog owners can be held liable for injuries caused by their animals. We want to ensure that your medical treatment is documented and that you receive full compensation for your injuries.`;
   }
 
   // Vehicle — pedestrian
@@ -69,23 +83,19 @@ function generateAccidentSummary(extraction: ExtractionResult): string {
     return `From the details shared, I understand that you were cycling when a vehicle operated by ${defendantName} made contact with your bicycle. These types of incidents between vehicles and cyclists require careful investigation, and I want to reassure you that we are here to advocate for you.`;
   }
 
+  const road = ad.location_road ? toTitleCase(ad.location_road) : "the road";
+
   // Vehicle — narrative-based context
   if (desc.toUpperCase().includes("BUS LANE") || desc.toUpperCase().includes("MIDDLE LANE")) {
-    return `From the details shared, I understand that you were traveling on ${
-      ad.location_road || "the road"
-    } when your vehicle was struck. While you stated that the other driver was moving from the bus lane into the middle lane and hit you, they are claiming that you were the one in the middle lane and merged into them. We know that these types of disputed collisions can be disruptive, but I want to reassure you that we are here to advocate for you and handle the legal process as smoothly as possible.`;
+    return `From the details shared, I understand that you were traveling on ${road} when your vehicle was struck. While you stated that the other driver was moving from the bus lane into the middle lane and hit you, they are claiming that you were the one in the middle lane and merged into them. We know that these types of disputed collisions can be disruptive, but I want to reassure you that we are here to advocate for you and handle the legal process as smoothly as possible.`;
   }
 
   if (desc.toUpperCase().includes("REAR") || ad.accident_type?.toLowerCase().includes("rear")) {
-    return `From the details shared, I understand that your vehicle was struck from behind while you were driving on ${
-      ad.location_road || "the road"
-    }. Rear-end collisions like this are often clear-cut in terms of liability, and we are well-positioned to advocate on your behalf and ensure you receive fair compensation for any damages sustained.`;
+    return `From the details shared, I understand that your vehicle was struck from behind while you were driving on ${road}. Rear-end collisions like this are often clear-cut in terms of liability, and we are well-positioned to advocate on your behalf and ensure you receive fair compensation for any damages sustained.`;
   }
 
   // Vehicle — generic
-  return `From the details shared, I understand that you were involved in a ${accidentTypeDesc} on ${
-    ad.location_road || "the road"
-  } involving a vehicle operated by ${defendantName}. We know that dealing with the aftermath of an accident can be disruptive, and I want to reassure you that we are here to advocate for you and handle the legal process as smoothly as possible.`;
+  return `From the details shared, I understand that you were involved in a ${accidentTypeDesc} on ${road} involving a vehicle operated by ${defendantName}. We know that dealing with the aftermath of an accident can be disruptive, and I want to reassure you that we are here to advocate for you and handle the legal process as smoothly as possible.`;
 }
 
 export interface GeneratedEmail {
@@ -140,7 +150,9 @@ When you're ready, you can book an appointment with us using this link: ${calend
 At that meeting, we'll go through the agreement in detail and discuss next steps.
 
 Andrew Richards
-Richards & Law`;
+Richards & Law
+Tel: (718) 555-0192
+1412 Broadway, Suite 2100, New York, NY 10018`;
 
   // HTML version
   const html = `<!DOCTYPE html>
@@ -164,11 +176,13 @@ Richards & Law`;
   .signature { border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 24px; }
   .signature .name { font-weight: 700; font-size: 16px; color: #1a1a2e; margin: 0; }
   .signature .firm { color: #c9a84c; font-size: 13px; margin: 2px 0 0; font-weight: 500; }
-  .attachment { background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin: 16px 0; display: flex; align-items: center; gap: 12px; }
-  .attachment .icon { width: 36px; height: 36px; background: #fee2e2; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
-  .attachment .info { font-size: 13px; }
-  .attachment .info .filename { font-weight: 600; color: #1a1a2e; }
-  .attachment .info .meta { color: #9ca3af; font-size: 11px; }
+  .attachment { background: #f8f9fa; border: 1px solid #e5e7eb; border-radius: 8px; padding: 0; margin: 16px 0; overflow: hidden; }
+  .attachment td { vertical-align: middle; }
+  .attachment .icon-cell { width: 52px; padding: 12px; }
+  .attachment .icon { width: 36px; height: 36px; background: #fee2e2; border-radius: 6px; text-align: center; line-height: 36px; font-size: 14px; }
+  .attachment .info-cell { padding: 12px 16px 12px 0; }
+  .attachment .filename { font-weight: 600; color: #1a1a2e; font-size: 13px; }
+  .attachment .meta { color: #9ca3af; font-size: 11px; }
   .footer { background: #f8f9fa; padding: 20px 32px; text-align: center; border-top: 1px solid #e5e7eb; }
   .footer p { color: #9ca3af; font-size: 11px; margin: 0; line-height: 1.5; }
 </style>
@@ -194,17 +208,24 @@ Richards & Law`;
       <a href="${calendly.url}" class="cta">Book a Consultation (${calendly.label})</a>
     </p>
 
-    <div class="attachment">
-      <div class="icon">📄</div>
-      <div class="info">
-        <div class="filename">${clientName} [Retainer Agreement].pdf</div>
-        <div class="meta">PDF Document — Please review before our meeting</div>
-      </div>
-    </div>
+    <table class="attachment" width="100%" cellpadding="0" cellspacing="0" role="presentation">
+      <tr>
+        <td class="icon-cell"><div class="icon">&#128196;</div></td>
+        <td class="info-cell">
+          <div class="filename">${clientName} [Retainer Agreement].pdf</div>
+          <div class="meta">PDF Document &mdash; Please review before our meeting</div>
+        </td>
+      </tr>
+    </table>
 
     <div class="signature">
       <p class="name">Andrew Richards</p>
       <p class="firm">Richards &amp; Law</p>
+      <p style="color: #6b7280; font-size: 12px; margin: 8px 0 0; line-height: 1.5;">
+        Tel: (718) 555-0192<br>
+        1412 Broadway, Suite 2100<br>
+        New York, NY 10018
+      </p>
     </div>
   </div>
   <div class="footer">

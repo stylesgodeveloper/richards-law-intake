@@ -131,7 +131,16 @@ export async function generateRetainerPDF(extraction: ExtractionResult): Promise
   drawCentered("RICHARDS & LAW", titleSize + 4);
   y -= 4;
   drawCenteredUnderline("CONTRACT FOR EMPLOYMENT OF ATTORNEYS", sectionSize);
-  y -= 12;
+
+  // Agreement date
+  const today = new Date();
+  const day = today.getDate();
+  const ordinal = day === 1 || day === 21 || day === 31 ? "st" : day === 2 || day === 22 ? "nd" : day === 3 || day === 23 ? "rd" : "th";
+  const monthName = today.toLocaleDateString("en-US", { month: "long" });
+  const dateStr = `Dated this ${day}${ordinal} day of ${monthName}, ${today.getFullYear()}`;
+  const dateWidth = fontItalic.widthOfTextAtSize(dateStr, fontSize);
+  page.drawText(dateStr, { x: (pageWidth - dateWidth) / 2, y, size: fontSize, font: fontItalic, color: rgb(0.3, 0.3, 0.3) });
+  y -= lineHeight + 8;
 
   drawParagraph(
     `This Retainer Agreement ("Agreement") is entered into between ${clientName} ("Client") and Richards & Law ("Attorney"), for the purpose of providing legal representation related to the damages sustained in an incident that occurred on ${accidentDate}. By executing this Agreement, Client employs Attorney to investigate, pursue, negotiate, and, if necessary, litigate claims for damages against ${defendantName} who may be responsible for such damages suffered by Client as a result of ${his} accident.`
@@ -144,6 +153,15 @@ export async function generateRetainerPDF(extraction: ExtractionResult): Promise
   drawCenteredUnderline("Scope of Representation", sectionSize);
   drawParagraph(
     `Attorney shall undertake all reasonable and necessary legal efforts to diligently protect and advance Client's interests in the Claim, extending to both settlement negotiations and litigation proceedings where appropriate. Client agrees to cooperate fully by providing truthful information, timely responses, and all relevant documents or records as requested. Client acknowledges that ${his} cooperation is essential to the effective handling of the Claim.`
+  );
+
+  y -= 8;
+  drawCenteredUnderline("Contingency Fee", sectionSize);
+  drawParagraph(
+    'Client agrees to compensate Attorney on a contingency fee basis, meaning no attorney\'s fees are owed unless a recovery is obtained. If the Claim is resolved prior to the filing of a lawsuit, Attorney shall receive thirty-three and one-third percent (33.33%) of the gross recovery. If the Claim is resolved after the filing of a lawsuit, Attorney shall receive forty percent (40%) of the gross recovery.'
+  );
+  drawParagraph(
+    `In the event that no recovery is obtained, Client shall owe no attorney's fees. However, Client acknowledges that ${he} may still be responsible for Litigation Expenses advanced on ${his} behalf, as detailed below.`
   );
 
   y -= 8;
@@ -215,6 +233,22 @@ export async function generateRetainerPDF(extraction: ExtractionResult): Promise
   page.drawText("Date: _______________", { x: pageWidth - margin - 150, y, size: fontSize, font });
   y -= 18;
   page.drawText("Andrew Richards", { x: margin, y, size: fontSize, font: fontBold });
+
+  // Add page numbers to all pages
+  const pages = pdfDoc.getPages();
+  const totalPages = pages.length;
+  for (let i = 0; i < totalPages; i++) {
+    const pg = pages[i];
+    const pageNumText = `Page ${i + 1} of ${totalPages}`;
+    const pageNumWidth = font.widthOfTextAtSize(pageNumText, 9);
+    pg.drawText(pageNumText, {
+      x: (pageWidth - pageNumWidth) / 2,
+      y: margin - 24,
+      size: 9,
+      font,
+      color: rgb(0.5, 0.5, 0.5),
+    });
+  }
 
   const pdfBytes = await pdfDoc.save();
   const base64 = Buffer.from(pdfBytes).toString("base64");
