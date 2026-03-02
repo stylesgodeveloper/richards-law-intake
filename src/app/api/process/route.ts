@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { computeViabilityScore } from "@/lib/scoring-engine";
 import { generateFollowUpChecklist } from "@/lib/follow-up-tasks";
+import { generateClientEmail } from "@/lib/email-template";
 
 export const maxDuration = 120;
 
@@ -240,6 +241,9 @@ export async function POST(request: NextRequest) {
     // Generate follow-up tasks
     const followUpTasks = generateFollowUpChecklist(extraction);
 
+    // Generate personalized client email
+    const clientEmailContent = generateClientEmail(extraction);
+
     // ===== OPTION 1: If Make.com webhook is configured, delegate to it =====
     if (makeWebhook) {
       // Flatten payload so Make.com can access all fields at the top level
@@ -286,6 +290,10 @@ export async function POST(request: NextRequest) {
         case_viability_recommendation: viabilityScore.recommendation,
         follow_up_tasks: JSON.stringify(followUpTasks),
         follow_up_task_count: String(followUpTasks.length),
+        // Pre-rendered client email (for Make.com email module)
+        email_subject: clientEmailContent.subject,
+        email_body_html: clientEmailContent.html,
+        email_body_text: clientEmailContent.text,
       };
       // Remove empty values to avoid Clio "Invalid parameter" errors
       const flatPayload: Record<string, string> = {
@@ -465,6 +473,8 @@ export async function POST(request: NextRequest) {
         viability_settlement_range: viabilityScore.settlement_range,
         follow_up_tasks: followUpTasks,
         follow_up_task_count: followUpTasks.length,
+        email_subject: clientEmailContent.subject,
+        email_body_html: clientEmailContent.html,
       },
     });
   } catch (err) {
