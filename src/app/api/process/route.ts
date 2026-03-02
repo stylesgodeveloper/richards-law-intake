@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { computeViabilityScore } from "@/lib/scoring-engine";
 import { generateFollowUpChecklist } from "@/lib/follow-up-tasks";
 import { generateClientEmail } from "@/lib/email-template";
+import { generateRetainerPDF } from "@/lib/generate-retainer-pdf";
 
 export const maxDuration = 120;
 
@@ -244,6 +245,9 @@ export async function POST(request: NextRequest) {
     // Generate personalized client email
     const clientEmailContent = generateClientEmail(extraction);
 
+    // Generate retainer PDF
+    const retainerPdf = await generateRetainerPDF(extraction);
+
     // ===== OPTION 1: If Make.com webhook is configured, delegate to it =====
     if (makeWebhook) {
       // Flatten payload so Make.com can access all fields at the top level
@@ -294,6 +298,8 @@ export async function POST(request: NextRequest) {
         email_subject: clientEmailContent.subject,
         email_body_html: clientEmailContent.html,
         email_body_text: clientEmailContent.text,
+        retainer_pdf_base64: retainerPdf.base64,
+        retainer_pdf_filename: retainerPdf.filename,
       };
       // Remove empty values to avoid Clio "Invalid parameter" errors
       const flatPayload: Record<string, string> = {
@@ -475,6 +481,7 @@ export async function POST(request: NextRequest) {
         follow_up_task_count: followUpTasks.length,
         email_subject: clientEmailContent.subject,
         email_body_html: clientEmailContent.html,
+        retainer_pdf_filename: retainerPdf.filename,
       },
     });
   } catch (err) {
